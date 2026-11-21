@@ -1,0 +1,131 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Suporte a Safe Area insets para dispositivos móveis (Capacitor / iOS Notch e Barra Inferior) */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+}
+
+body {
+  background-color: #f9f9f9;
+  color: #1a1c1c;
+  -webkit-font-smoothing: antialiased;
+  padding-top: var(--sat);
+  padding-bottom: var(--sab);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.ghost-border {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-width: 2px !important;
+  border-color: #000000 !important;
+}
+
+.bg-noise {
+  background-image: url("https://www.transparenttextures.com/patterns/p6.png");
+  opacity: 0.03;
+  pointer-events: none;
+}
+
+.step-inactive {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #000;
+}
+
+.page-transition {
+  transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.grayscale-hover {
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.grayscale-hover:hover {
+  filter: grayscale(0%);
+}
+
+input[type="radio"]:checked + label {
+  background-color: black;
+  color: white;
+  border-color: black;
+}
+
+.tab-active {
+  border-bottom: 2px solid black;
+  color: black;
+  opacity: 1;
+}
+
+.tab-inactive {
+  border-bottom: 2px solid transparent;
+  color: #4c4546;
+  opacity: 0.5;
+}
+
+/* Regras globais para o Modo Escuro (ativado pela classe .dark no elemento html) */
+html.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #0a0a0a;
+  color: #f5f5f5;
+}
+
+.dark .ghost-border {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #ffffff !important;
+}
+
+.dark .bg-noise {
+  filter: invert(1);
+  opacity: 0.04;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e5e5e5;
+}
+
+.dark input[type="radio"]:checked + label {
+  background-color: #171717;
+  color: #ffffff;
+  border-color: #ffffff;
+}
+
+.dark .tab-active {
+  border-bottom: 2px solid #ffffff;
+  color: #ffffff;
+}
+
+.dark .tab-inactive {
+  color: #a3a3a3;
+}

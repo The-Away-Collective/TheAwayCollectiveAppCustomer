@@ -1,0 +1,14 @@
+{
+  "appId": "com.thewaycollective.customer",
+  "appName": "The Way Customer",
+  "webDir": ".output/public",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}
+
