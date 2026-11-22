@@ -181,6 +181,7 @@
                         class="w-full h-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0 group-hover:scale-105" 
                         :src="spec.image" 
                         :alt="spec.name"
+                        referrerpolicy="no-referrer"
                         @error="spec.imageError = true"
                       />
 
@@ -845,6 +846,22 @@ onMounted(async () => {
   pageLoading.value = false
 })
 
+// Converte links do Google Drive (compartilhamento/visualização) em URL direta de imagem
+const formatSpecialistImageUrl = (rawUrl?: string | null): string | null => {
+  if (!rawUrl || typeof rawUrl !== 'string') return null
+  const url = rawUrl.trim()
+  if (!url) return null
+
+  if (url.includes('drive.google.com')) {
+    const fileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/)
+    if (fileIdMatch && fileIdMatch[1]) {
+      return `https://drive.google.com/thumbnail?id=${fileIdMatch[1]}&sz=w1000`
+    }
+  }
+
+  return url
+}
+
 // Consulta lista de especialistas com horários e serviços no backend (GET /profissional/disponibilidade)
 const loadSpecialists = async (queryTerm = '', serviceType = '') => {
   try {
@@ -872,7 +889,7 @@ const loadSpecialists = async (queryTerm = '', serviceType = '') => {
           name: p.nome,
           role: 'MESTRE BARBEIRO E ESTILISTA',
           service: 'barbearia',
-          image: p.imagem || null,
+          image: formatSpecialistImageUrl(p.imagem),
           imageError: false,
           total_disponiveis: p.total_disponiveis,
           slots: p.slots,
