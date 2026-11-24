@@ -95,12 +95,25 @@
                       v-for="sub in availableSubServices" 
                       :key="sub.value"
                       type="button"
+                      :disabled="!sub.available"
                       class="border p-3 sm:p-4 text-left transition-all relative"
-                      :class="booking.subService === sub.value ? 'bg-primary text-on-primary border-primary dark:bg-white dark:text-neutral-950 dark:border-white font-bold shadow-sm' : 'border-black/10 dark:border-white/15 hover:border-black dark:hover:border-white bg-white dark:bg-neutral-900 dark:text-neutral-100'"
+                      :class="[
+                        !sub.available
+                          ? 'border-black/10 dark:border-white/10 bg-neutral-100 dark:bg-neutral-900/50 text-neutral-400 dark:text-neutral-500 opacity-65 cursor-not-allowed'
+                          : booking.subService === sub.value
+                            ? 'bg-primary text-on-primary border-primary dark:bg-white dark:text-neutral-950 dark:border-white font-bold shadow-sm'
+                            : 'border-black/10 dark:border-white/15 hover:border-black dark:hover:border-white bg-white dark:bg-neutral-900 dark:text-neutral-100'
+                      ]"
                       @click="selectSubService(sub)"
                     >
+                      <span
+                        v-if="!sub.available"
+                        class="font-detail-mono text-[9px] px-1.5 py-0.5 border border-black/20 dark:border-white/20 bg-neutral-200 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 font-bold uppercase inline-flex items-center gap-1 mb-1.5"
+                      >
+                        NÃO OFERECE
+                      </span>
                       <span 
-                        v-if="sub.em_promocao"
+                        v-else-if="sub.em_promocao"
                         class="font-detail-mono text-[9px] px-1.5 py-0.5 border border-red-500 dark:border-red-500/70 bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 font-bold uppercase inline-flex items-center gap-1 mb-1.5"
                         :class="{ '!bg-white !text-red-600 !border-white dark:!bg-red-600 dark:!text-white dark:!border-red-600': booking.subService === sub.value }"
                       >
@@ -108,14 +121,19 @@
                         {{ sub.tag_promocao || 'PROMOÇÃO' }}
                       </span>
                       <span class="block font-label-caps text-[11px] sm:text-xs uppercase">{{ sub.label }}</span>
-                      <span
-                        class="block font-headline-lg-mobile text-xs sm:text-sm font-bold mt-1"
-                        :class="booking.subService === sub.value ? 'text-on-primary dark:text-neutral-950' : 'text-primary dark:text-white'"
-                      >
-                        R$ {{ Number(sub.price).toFixed(2) }}
-                      </span>
-                      <span class="block font-detail-mono text-[10px] opacity-75 mt-0.5">
-                        <span class="material-symbols-outlined text-[10px] align-middle">schedule</span> {{ sub.duration }} min
+                      <template v-if="sub.available">
+                        <span
+                          class="block font-headline-lg-mobile text-xs sm:text-sm font-bold mt-1"
+                          :class="booking.subService === sub.value ? 'text-on-primary dark:text-neutral-950' : 'text-primary dark:text-white'"
+                        >
+                          R$ {{ Number(sub.price).toFixed(2) }}
+                        </span>
+                        <span class="block font-detail-mono text-[10px] opacity-75 mt-0.5">
+                          <span class="material-symbols-outlined text-[10px] align-middle">schedule</span> {{ sub.duration }} min
+                        </span>
+                      </template>
+                      <span v-else class="block font-detail-mono text-[10px] opacity-75 mt-1">
+                        Indisponível com este profissional
                       </span>
                     </button>
                   </div>
@@ -702,42 +720,62 @@ const getSpecialistInitials = (name?: string): string => {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-// Sub-serviços com valores e tempos dinâmicos vindos da tabela 'servico' do banco
+const ALL_SERVICE_TYPES = ['Corte', 'Barba', 'Corte_e_Barba', 'Sobrancelha', 'Outro']
+
+// Sub-serviços exibindo todos os serviços da barbearia e habilitando apenas os oferecidos pelo especialista
 const availableSubServices = computed(() => {
-  // Se um especialista já foi selecionado e tem serviços cadastrados
-  if (booking.value.specialist?.servicos && booking.value.specialist.servicos.length > 0) {
-    return booking.value.specialist.servicos.map((s: any) => ({
-      label: formatServiceLabel(s.tipo_servico),
-      value: s.tipo_servico,
-      price: Number(s.valor),
-      duration: s.duracao || 30,
-      em_promocao: Boolean(s.em_promocao),
-      tag_promocao: s.tag_promocao || '',
-      observacao: s.observacao || ''
-    }))
+  const serviceMap = new Map<string, any>()
+
+  if (booking.value.specialist) {
+    const specServices = Array.isArray(booking.value.specialist.servicos) ? booking.value.specialist.servicos : []
+    specServices.forEach((s: any) => {
+      serviceMap.set(s.tipo_servico, s)
+    })
+  } else {
+    filteredSpecialists.value.forEach((spec: any) => {
+      if (spec.servicos && Array.isArray(spec.servicos)) {
+        spec.servicos.forEach((s: any) => {
+          if (!serviceMap.has(s.tipo_servico)) {
+            serviceMap.set(s.tipo_servico, s)
+          }
+        })
+      }
+    })
   }
 
-  // Caso nenhum especialista específico esteja selecionado, consolida os serviços de todos os especialistas da categoria
-  const mapUnique = new Map<string, any>()
-  filteredSpecialists.value.forEach((spec: any) => {
-    if (spec.servicos && Array.isArray(spec.servicos)) {
-      spec.servicos.forEach((s: any) => {
-        if (!mapUnique.has(s.tipo_servico)) {
-          mapUnique.set(s.tipo_servico, {
-            label: formatServiceLabel(s.tipo_servico),
-            value: s.tipo_servico,
-            price: Number(s.valor),
-            duration: s.duracao || 30,
-            em_promocao: Boolean(s.em_promocao),
-            tag_promocao: s.tag_promocao || '',
-            observacao: s.observacao || ''
-          })
-        }
-      })
+  const allTypes = [...ALL_SERVICE_TYPES]
+  serviceMap.forEach((_, key) => {
+    if (!allTypes.includes(key)) {
+      allTypes.push(key)
     }
   })
 
-  return Array.from(mapUnique.values())
+  return allTypes.map((tipo) => {
+    const found = serviceMap.get(tipo)
+    if (found) {
+      return {
+        label: formatServiceLabel(tipo),
+        value: tipo,
+        price: Number(found.valor),
+        duration: found.duracao || 30,
+        em_promocao: Boolean(found.em_promocao),
+        tag_promocao: found.tag_promocao || '',
+        observacao: found.observacao || '',
+        available: true
+      }
+    }
+
+    return {
+      label: formatServiceLabel(tipo),
+      value: tipo,
+      price: 0,
+      duration: 0,
+      em_promocao: false,
+      tag_promocao: '',
+      observacao: '',
+      available: false
+    }
+  })
 })
 
 const selectedSubService = computed(() => {
@@ -764,6 +802,7 @@ const selectServiceType = async (serviceType = 'barbearia') => {
 
 // Disparado quando o cliente seleciona um sub-serviço
 const selectSubService = (sub: any) => {
+  if (!sub?.available) return
   booking.value.subService = sub.value
   booking.value.time = ''
   if (booking.value.specialist && booking.value.date) {
